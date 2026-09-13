@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "csoai-defoneos-mcp"
+version = "1.0.5"
+description = "CSOAI DEFONEOS — UK defence-AI measurement surface (DEFONEOS-SEAL living attestation + MITRE ATLAS + governance crosswalk + audit chain). Measurement, not certification."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "CSOAI Ltd", email = "nicholas@csoai.org"}]
+keywords = ["mcp", "defence", "uk", "csoai", "measurement"]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0,<2.0.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.scripts]
+csoai-defoneos-mcp = "csoai_defoneos_mcp._entry:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["csoai_defoneos_mcp"]
