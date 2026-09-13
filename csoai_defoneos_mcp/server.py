@@ -2,7 +2,7 @@
 """
 csoai-defoneos-mcp — server.py
 
-CSOAI DEFONEOS — sovereign UK defence-AI CERTIFICATION surface.
+CSOAI DEFONEOS — UK defence-AI MEASUREMENT surface.
 The CERTIFIES compartment per `MEOK_DEFONEOS_ALIGNMENT_2026-06-27.md` v2.0.
 
 Tools (6):
@@ -11,7 +11,7 @@ Tools (6):
   3. defence_audit_trail             — append-only Ed25519-signed audit chain
   4. csoai_defoneos_seal_issue       — DEFONEOS-SEAL signed credential issuance
   5. care_membrane_validate          — 4-dimension care ethics + 16 probes
-  6. csoai_defoneos_full_cert        — 1-call sovereign UK defence-AI certification
+  6. csoai_defoneos_full_cert        — 1-call UK defence-AI measurement
 
 The BannedTermGate (from the Mavis template) refuses any prompt containing
 severed brands (James Castle, CSGA, Terranova, defonos.io, Toronto Summit
@@ -258,7 +258,7 @@ def defence_audit_trail(
 
     Args:
         action: what happened (e.g. "DEFONEOS-SEAL issued for Sentry Drone Mk3")
-        actor: who did it (the 33-agent BFT council verdict OR a human reviewer)
+        actor: who did it (the council verdict OR a human reviewer)
         system_id: the system the audit entry is about
         care_score: the care-membrane score at the time of the action
         sov3_sigil: optional SOV3 sigil to chain this entry to
@@ -336,7 +336,7 @@ def csoai_defoneos_seal_issue(
 
     The SEAL is the canonical signed credential that a UK prime can attach
     to a contract deliverable. Requires:
-      - 33-agent BFT council verdict (council_verdict_id)
+      - council verdict (council_verdict_id)
       - governance audit result (defoneos_seal_eligible = True)
       - care audit result (refused = False)
       - care_score >= 0.95
@@ -346,7 +346,7 @@ def csoai_defoneos_seal_issue(
         buyer_org: the buyer organisation
         governance_audit_result: output of defence_governance_full_audit
         care_audit_result: output of care_membrane_validate
-        council_verdict_id: the 33-agent BFT council verdict (if issued)
+        council_verdict_id: the council verdict (if issued)
 
     Returns:
         {
@@ -357,7 +357,7 @@ def csoai_defoneos_seal_issue(
             "council_verdict_id": str,
             "care_score": float,
             "governance_score": float,
-            "seal_url": str (public verify URL at meok.ai/verify?seal=...),
+            "seal_url": str (public verify URL at councilof.ai/gspc-verify?seal=...),
             "ed25519_signature": str (simulated — real impl uses Ed25519),
             "sov3_sigil": str
         }
@@ -375,7 +375,7 @@ def csoai_defoneos_seal_issue(
     if not council_verdict_id:
         return {
             "error": "refused",
-            "reason": "council_verdict_id required (33-agent BFT verdict)",
+            "reason": "council_verdict_id required",
         }
 
     ts = datetime.now(timezone.utc).isoformat()
@@ -399,7 +399,7 @@ def csoai_defoneos_seal_issue(
         "council_verdict_id": council_verdict_id,
         "care_score": care_audit_result.get("care_score", 0),
         "governance_score": governance_audit_result.get("compliance_score", 0),
-        "seal_url": f"https://meok.ai/verify?seal={seal_id}",
+        "seal_url": f"https://councilof.ai/gspc-verify?seal={seal_id}",
         "ed25519_signature": ed25519_sig,
         "sov3_sigil": sigil,
     }
@@ -441,7 +441,7 @@ def csoai_defoneos_full_cert(
     buyer_org: str,
     council_verdict_id: Optional[str] = None,
 ) -> dict[str, Any]:
-    """The 1-call sovereign UK defence-AI certification.
+    """The 1-call UK defence-AI measurement.
 
     Chains ATLAS + crosswalk + audit + care + (optionally) SEAL issuance.
 
@@ -566,7 +566,7 @@ async def list_tools():
         ),
         Tool(
             name="csoai_defoneos_seal_issue",
-            description="Issue a DEFONEOS-SEAL signed credential for a UK defence-AI system. Requires 33-agent BFT council verdict + care score ≥ 0.95.",
+            description="Issue a DEFONEOS-SEAL signed credential for a UK defence-AI system. Requires council verdict + care score ≥ 0.95.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -593,7 +593,7 @@ async def list_tools():
         ),
         Tool(
             name="csoai_defoneos_full_cert",
-            description="The 1-call sovereign UK defence-AI certification. Chains ATLAS + crosswalk + audit + care + (optionally) SEAL. Procurement-grade for UK MOD / AUKUS.",
+            description="The 1-call UK defence-AI measurement. Chains ATLAS + crosswalk + audit + care + (optionally) SEAL. Procurement-grade for UK MOD / AUKUS.",
             inputSchema={
                 "type": "object",
                 "properties": {
