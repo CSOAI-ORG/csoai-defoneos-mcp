@@ -1,0 +1,103 @@
+name: seal-verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install csoai-defoneos-mcp==1.0.6 mcp<2.0.0
+
+      - name: Start server and call seal tool
+        env:
+          SENTINEL_ID: SENTINEL-001
+        run: |
+          python3 << 'PY'
+          import subprocess, json, sys
+
+          init = json.dumps({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci-seal-verify","version":"1.0"}}})
+          initialized = json.dumps({"jsonrpc":"2.0","method":"notifications/initialized"})
+
+          seal_args = {
+              "system_id": "SENTINEL-001",
+              "buyer_org": "Babcock International",
+              "governance_audit_result": {
+                  "verdict": "PASS",
+                  "score": 0.94,
+                  "axes": 22,
+                  "defoneos_seal_eligible": True,
+                  "council_verdict_id": "V-2026-0913-01"
+              },
+              "care_audit_result": {
+                  "verdict": "PASS",
+                  "score": 0.97,
+                  "probes_passed": 15,
+                  "above_threshold": True,
+                  "dimensions_assessed": ["dignity", "agency", "safety", "solidarity"]
+              },
+              "council_verdict_id": "V-2026-0913-01"
+          }
+
+          call = json.dumps({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"csoai_defoneos_seal_issue","arguments":seal_args}})
+          input_str = init + "\n" + initialized + "\n" + call + "\n"
+
+          proc = subprocess.run(['csoai-defoneos-mcp'], input=input_str, capture_output=True, text=True, timeout=30)
+
+          seal = None
+          for line in proc.stdout.strip().split('\n'):
+              if not line: continue
+              try:
+                  resp = json.loads(line)
+                  if 'result' in resp and 'content' in resp.get('result', {}):
+                      for item in resp['result']['content']:
+                          seal = json.loads(item.get('text',''))
+              except: pass
+
+          if not seal:
+              print("❌ FAILED: no seal response")
+              print("stderr:", proc.stderr[:300])
+              sys.exit(1)
+
+          print("=" * 60)
+          print("SEAL VERIFICATION RESULT")
+          print("=" * 60)
+          print(json.dumps(seal, indent=2))
+          print("=" * 60)
+
+          # Assertions
+          assertions = [
+              ("seal_url points to councilof.ai", seal.get('seal_url','').startswith('https://councilof.ai/gspc-verify')),
+              ("seal_url does NOT point to meok.ai", 'meok.ai' not in seal.get('seal_url','')),
+              ("seal_id present", bool(seal.get('seal_id'))),
+              ("ed25519_signature present", bool(seal.get('ed25519_signature'))),
+              ("sov3_sigil present", bool(seal.get('sov3_sigil'))),
+              ("system_id matches", seal.get('system_id') == 'SENTINEL-001'),
+              ("buyer_org present", bool(seal.get('buyer_org'))),
+              ("care_score is number", isinstance(seal.get('care_score'), (int, float))),
+              ("governance_score is number", isinstance(seal.get('governance_score'), (int, float))),
+          ]
+
+          all_pass = True
+          for name, passed in assertions:
+              status = "✅" if passed else "❌"
+              print(f"{status} {name}")
+              if not passed: all_pass = False
+
+          if not all_pass:
+              print("\n❌ Seal verification FAILED")
+              sys.exit(1)
+          print("\n✅ All seal assertions PASSED")
+          PY
