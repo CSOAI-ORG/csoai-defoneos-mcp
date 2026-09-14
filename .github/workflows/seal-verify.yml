@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: pip install csoai-defoneos-mcp==1.0.6 mcp<2.0.0
+        run: pip install "csoai-defoneos-mcp==1.0.6" "mcp<2.0.0"
 
       - name: Start server and call seal tool
         env:
