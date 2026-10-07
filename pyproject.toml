@@ -12,7 +12,7 @@ authors = [{name = "CSOAI Ltd", email = "nicholas@csoai.org"}]
 keywords = ["mcp", "defence", "uk", "csoai", "measurement"]
 requires-python = ">=3.10"
 dependencies = [
-    "mcp>=1.0.0,<2.0.0",
+    "mcp>=2.0.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
